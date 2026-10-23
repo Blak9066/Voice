@@ -31,6 +31,23 @@ jobs:
           rm -rf build_app/lib
           cp -r source/app/lib build_app/lib
           cp source/app/pubspec.yaml build_app/pubspec.yaml
+          # Keep the legacy record API, but use a Linux implementation compatible
+          # with the newer record_platform_interface selected by Pub.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          pubspec = Path("build_app/pubspec.yaml")
+          text = pubspec.read_text()
+          override = "  record_linux: ^1.3.1"
+          if re.search(r"(?m)^dependency_overrides:\s*$", text):
+              if not re.search(r"(?m)^  record_linux\s*:", text):
+                  text = re.sub(r"(?m)^(dependency_overrides:\s*)$", r"\1\n" + override, text, count=1)
+          else:
+              text = text.rstrip() + "\n\ndependency_overrides:\n" + override + "\n"
+          pubspec.write_text(text)
+          print("Pinned record_linux to a version compatible with record_platform_interface")
+          PY
           python3 source/.github/scripts/patch_android.py
           python3 - <<'PY'
           from pathlib import Path
