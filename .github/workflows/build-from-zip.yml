@@ -107,8 +107,8 @@ jobs:
               for gradle in list(root.glob("*/android/build.gradle")) + list(root.glob("*/android/build.gradle.kts")):
                   text = gradle.read_text()
                   updated = text
-                  updated = re.sub(r"(?m)^(\s*compileSdkVersion\s+)33(\s*(?://.*)?$)", r"\g<1>36\\2", updated)
-                  updated = re.sub(r"(?m)^(\s*compileSdk\s*=\s*)33(\s*(?://.*)?$)", r"\g<1>36\\2", updated)
+                  updated = re.sub(r"(?m)^(\s*compileSdkVersion\s+)33(\s*(?://.*)?$)", lambda m: m.group(1) + "36" + m.group(2), updated)
+                  updated = re.sub(r"(?m)^(\s*compileSdk\s*=\s*)33(\s*(?://.*)?$)", lambda m: m.group(1) + "36" + m.group(2), updated)
                   if updated != text:
                       gradle.write_text(updated)
                       patched.append(str(gradle))
