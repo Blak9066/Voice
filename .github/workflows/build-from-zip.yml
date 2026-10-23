@@ -64,12 +64,18 @@ jobs:
           text = app_gradle.read_text()
           text, count1 = re.subn(r"(?m)^(\s*minSdkVersion\s+).+$", r"\g<1>21", text)
           text, count2 = re.subn(r"(?m)^(\s*minSdk\s*=\s*).+$", r"\g<1>21", text)
+          text, count3 = re.subn(r"(?m)^(\s*compileSdkVersion\s+).+$", r"\g<1>35", text)
+          text, count4 = re.subn(r"(?m)^(\s*compileSdk\s*=\s*).+$", r"\g<1>35", text)
           if count1 + count2 == 0:
               raise SystemExit("Could not find minSdk setting in " + str(app_gradle))
+          if count3 + count4 == 0:
+              raise SystemExit("Could not find compileSdk setting in " + str(app_gradle))
           app_gradle.write_text(text)
           if not re.search(r"(?m)^\s*minSdk(?:Version)?\s*(?:=\s*)?21\s*$", text):
               raise SystemExit("Failed to set Android minSdk to 21")
-          print("Configured Android minSdk=21 in", app_gradle)
+          if not re.search(r"(?m)^\s*compileSdk(?:Version)?\s*(?:=\s*)?35\s*$", text):
+              raise SystemExit("Failed to set Android compileSdk to 35")
+          print("Configured Android minSdk=21 and compileSdk=35 in", app_gradle)
 
           props = Path("build_app/android/gradle.properties")
           existing = props.read_text() if props.exists() else ""
