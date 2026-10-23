@@ -1,9 +1,6 @@
 name: Build VoiceBridge APK
 on:
   push:
-    paths:
-      - 'VoiceBridge-GitHub-Upload.zip'
-      - '.github/workflows/build-from-zip.yml'
   workflow_dispatch:
 
 jobs:
