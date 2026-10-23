@@ -13,10 +13,12 @@ jobs:
           unzip -o VoiceBridge-GitHub-Upload.zip -d source
           test -f source/plugin/pom.xml
           test -f source/plugin/src/main/resources/plugin.yml
+          sed -i 's/<maven.compiler.release>17<\//<maven.compiler.release>21<\//' source/plugin/pom.xml
+          sed -i 's/<version>1.20.4-R0.1-SNAPSHOT<\//<version>1.21.1-R0.1-SNAPSHOT<\//' source/plugin/pom.xml
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
           cache: maven
       - name: Build plugin JAR
         run: mvn -B -f source/plugin/pom.xml clean package
