@@ -32,6 +32,8 @@ jobs:
           cp -r source/app/lib build_app/lib
           cp source/app/pubspec.yaml build_app/pubspec.yaml
           python3 source/.github/scripts/patch_android.py
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' build_app/android/app/build.gradle
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' build_app/android/app/build.gradle.kts
       - name: Build release APK
         working-directory: build_app
         run: |
