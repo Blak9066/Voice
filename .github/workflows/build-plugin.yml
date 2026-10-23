@@ -1,0 +1,27 @@
+name: Build VoiceBridge Minecraft Plugin
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract source archive
+        run: |
+          unzip -o VoiceBridge-GitHub-Upload.zip -d source
+          test -f source/plugin/pom.xml
+          test -f source/plugin/src/main/resources/plugin.yml
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build plugin JAR
+        run: mvn -B -f source/plugin/pom.xml clean package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceBridge-Minecraft-Plugin-JAR
+          path: source/plugin/target/VoiceBridge-1.0.0.jar
+          if-no-files-found: error
