@@ -64,8 +64,8 @@ jobs:
           text = app_gradle.read_text()
           text, count1 = re.subn(r"(?m)^(\s*minSdkVersion\s+).+$", r"\g<1>21", text)
           text, count2 = re.subn(r"(?m)^(\s*minSdk\s*=\s*).+$", r"\g<1>21", text)
-          text, count3 = re.subn(r"(?m)^(\s*compileSdkVersion\s+).+$", r"\g<1>35", text)
-          text, count4 = re.subn(r"(?m)^(\s*compileSdk\s*=\s*).+$", r"\g<1>35", text)
+          text, count3 = re.subn(r"(?m)^(\s*compileSdkVersion\s+).+$", r"\g<1>36", text)
+          text, count4 = re.subn(r"(?m)^(\s*compileSdk\s*=\s*).+$", r"\g<1>36", text)
           if count1 + count2 == 0:
               raise SystemExit("Could not find minSdk setting in " + str(app_gradle))
           if count3 + count4 == 0:
@@ -73,9 +73,9 @@ jobs:
           app_gradle.write_text(text)
           if not re.search(r"(?m)^\s*minSdk(?:Version)?\s*(?:=\s*)?21\s*$", text):
               raise SystemExit("Failed to set Android minSdk to 21")
-          if not re.search(r"(?m)^\s*compileSdk(?:Version)?\s*(?:=\s*)?35\s*$", text):
-              raise SystemExit("Failed to set Android compileSdk to 35")
-          print("Configured Android minSdk=21 and compileSdk=35 in", app_gradle)
+          if not re.search(r"(?m)^\s*compileSdk(?:Version)?\s*(?:=\s*)?36\s*$", text):
+              raise SystemExit("Failed to set Android compileSdk to 36")
+          print("Configured Android minSdk=21 and compileSdk=36 in", app_gradle)
 
           props = Path("build_app/android/gradle.properties")
           existing = props.read_text() if props.exists() else ""
@@ -83,6 +83,9 @@ jobs:
           if setting not in existing:
               props.write_text(existing.rstrip() + "\n" + setting + "\n")
           PY
+      - name: Install required Android SDK platform
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
       - name: Build release APK
         working-directory: build_app
         run: |
