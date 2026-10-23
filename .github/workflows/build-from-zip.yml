@@ -1,0 +1,47 @@
+name: Build VoiceBridge APK
+on:
+  push:
+    paths:
+      - 'VoiceBridge-GitHub-Upload.zip'
+      - '.github/workflows/build-from-zip.yml'
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract source archive
+        run: |
+          mkdir -p source
+          unzip -o VoiceBridge-GitHub-Upload.zip -d source
+          test -f source/app/pubspec.yaml
+          test -f source/app/lib/main.dart
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Create Android project from source
+        run: |
+          flutter create --org me.voicebridge --project-name voicebridge_app --platforms=android build_app
+          rm -rf build_app/lib
+          cp -r source/app/lib build_app/lib
+          cp source/app/pubspec.yaml build_app/pubspec.yaml
+          python3 source/.github/scripts/patch_android.py
+      - name: Build release APK
+        working-directory: build_app
+        run: |
+          flutter pub get
+          flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceBridge-app-apk
+          path: build_app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
