@@ -90,6 +90,36 @@ jobs:
         working-directory: build_app
         run: |
           flutter pub get
+          # Some older Flutter plugins hard-code compileSdk 33 in their own
+          # Android library module. Updating only the app module does not fix
+          # those plugin AAR metadata checks, so patch cached plugin Gradle files.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import os
+
+          cache = Path(os.environ.get("PUB_CACHE", str(Path.home() / ".pub-cache")))
+          roots = [cache / "hosted" / "pub.dev"]
+          patched = []
+          for root in roots:
+              if not root.exists():
+                  continue
+              for gradle in list(root.glob("*/android/build.gradle")) + list(root.glob("*/android/build.gradle.kts")):
+                  text = gradle.read_text()
+                  updated = text
+                  updated = re.sub(r"(?m)^(\\s*compileSdkVersion\\s+)33(\\s*(?://.*)?$)", r"\\g<1>36\\2", updated)
+                  updated = re.sub(r"(?m)^(\\s*compileSdk\\s*=\\s*)33(\\s*(?://.*)?$)", r"\\g<1>36\\2", updated)
+                  if updated != text:
+                      gradle.write_text(updated)
+                      patched.append(str(gradle))
+          print("Patched plugin compileSdk in:", patched)
+          pcm = list((cache / "hosted" / "pub.dev").glob("flutter_pcm_sound-*/android/build.gradle"))
+          pcm += list((cache / "hosted" / "pub.dev").glob("flutter_pcm_sound-*/android/build.gradle.kts"))
+          if pcm:
+              for gradle in pcm:
+                  print("flutter_pcm_sound Gradle configuration:")
+                  print(gradle.read_text())
+          PY
           flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
