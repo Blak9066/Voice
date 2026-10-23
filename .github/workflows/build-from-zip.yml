@@ -34,20 +34,31 @@ jobs:
           python3 source/.github/scripts/patch_android.py
           python3 - <<'PY'
           from pathlib import Path
+          import re
+
           candidates = [
               Path("build_app/android/app/build.gradle"),
               Path("build_app/android/app/build.gradle.kts"),
           ]
-          found = False
-          for path in candidates:
-              if path.exists():
-                  text = path.read_text()
-                  text = text.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 21")
-                  text = text.replace("minSdk = flutter.minSdkVersion", "minSdk = 21")
-                  path.write_text(text)
-                  found = True
-          if not found:
+          app_gradle = next((p for p in candidates if p.exists()), None)
+          if app_gradle is None:
               raise SystemExit("Could not find Android app Gradle build file")
+
+          text = app_gradle.read_text()
+          text, count1 = re.subn(r"(?m)^(\s*minSdkVersion\s+).+$", r"\g<1>21", text)
+          text, count2 = re.subn(r"(?m)^(\s*minSdk\s*=\s*).+$", r"\g<1>21", text)
+          if count1 + count2 == 0:
+              raise SystemExit("Could not find minSdk setting in " + str(app_gradle))
+          app_gradle.write_text(text)
+          if not re.search(r"(?m)^\s*minSdk(?:Version)?\s*(?:=\s*)?21\s*$", text):
+              raise SystemExit("Failed to set Android minSdk to 21")
+          print("Configured Android minSdk=21 in", app_gradle)
+
+          props = Path("build_app/android/gradle.properties")
+          existing = props.read_text() if props.exists() else ""
+          setting = "android.ndk.suppressMinSdkVersionError=21"
+          if setting not in existing:
+              props.write_text(existing.rstrip() + "\n" + setting + "\n")
           PY
       - name: Build release APK
         working-directory: build_app
