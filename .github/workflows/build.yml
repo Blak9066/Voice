@@ -1,0 +1,55 @@
+name: Build VoiceBridge Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/scripts/patch_android.py"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Android project and copy app source
+        run: |
+          flutter create --org me.voicebridge --project-name voicebridge_app --platforms=android build_app
+          rm -rf build_app/lib
+          cp -r app/lib build_app/lib
+          cp app/pubspec.yaml build_app/pubspec.yaml
+          python3 .github/scripts/patch_android.py
+
+      - name: Resolve dependencies
+        working-directory: build_app
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: build_app
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoiceBridge-Android-APK
+          path: build_app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
